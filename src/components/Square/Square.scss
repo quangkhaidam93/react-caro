@@ -18,7 +18,7 @@
 }
 
 .HighLight {
-    background: red;
+    background: #37eb34;
     border: 1px solid #999;
     float: left;
     font-size: 24px;
@@ -34,4 +34,14 @@
     &:focus {
         outline: none;
     }
+}
+
+.ColorX {
+    color: red;
+    font-weight: bold;
+}
+
+.ColorO {
+    color: blue;
+    font-weight: bold;
 }

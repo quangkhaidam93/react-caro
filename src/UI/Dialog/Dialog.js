@@ -1,13 +1,14 @@
 import React from 'react';
-import './Modal.scss';
+import './Dialog.scss';
 import BackDrop from '../Backdrop/Backdrop';
+import Aux from '../../hoc/Aux/Aux';
 
-const Modal = (props) => {
+const Dialog = (props) => {
     return (
-        <div>
+        <Aux>
             <BackDrop show={props.show} clicked={props.modalClosed} />
             <div
-                className="Modal"
+                className="Dialog"
                 style={{
                     transform: props.show ? 'translateY(0)' : 'translateY(-100vh)',
                     opacity: props.show ? '1' : '0'
@@ -15,8 +16,8 @@ const Modal = (props) => {
             >
                 {props.children}
             </div>
-        </div>
+        </Aux>
     )
 }
 
-export default Modal;
+export default Dialog;

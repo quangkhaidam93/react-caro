@@ -13,7 +13,15 @@ const Square = (props) => {
         }
     }
 
-    const className = color ? "HighLight" : "Square";
+    let className = color ? "HighLight" : "Square";
+
+    if (props.value === "X") {
+        className = className + " ColorX";
+    }
+
+    if (props.value === "O") {
+        className = className + " ColorO";
+    }
 
     return (
         <button className={className} onClick={() => props.onClick(props.row, props.col, props.isWin, props.winner)}>

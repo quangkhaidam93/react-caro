@@ -7,27 +7,25 @@
     margin-left: 20px;
 }
 
-.Button {
-    background-color: transparent;
-    border: none;
-    color: white;
-    outline: none;
-    cursor: pointer;
-    font: inherit;
-    padding: 10px;
-    margin: 10px;
-    font-weight: bold;
-
-    &:first-of-type {
-        margin-left: 0;
-        padding-left: 0;
-    }
-}
-
-.Success {
-    color: #5C9210;
-}
-
-.Output {
+.Console {
     margin-left: 20px;
+    border: 5px solid green;
+    padding-left: 15px;
+    background-color:rgba(255,255,0,0.3);
+}
+
+.MyInput {
+    margin-right: 10px;
+    border-radius: 10px;
+    border: 1px solid;
+}
+
+.RedSpan {
+    color: red;
+    font-weight: bold;
+}
+
+.BlueSpan {
+    color: blue;
+    font-weight: bold;
 }

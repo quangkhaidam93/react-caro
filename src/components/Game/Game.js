@@ -1,20 +1,29 @@
 import React, { Component } from 'react';
 import './Game.scss';
 import Board from '../Board/Board';
-import Modal from '../../UI/Modal/Modal';
-import Notification from '../Notification/Notification';
+import Dialog from '../../UI/Dialog/Dialog';
+import Alert from '../Alert/Alert';
+import Button from '../../UI/Button/Button';
+import * as Caro from '../../Caro/Caro';
 
 class Game extends Component {
     constructor(props) {
         super(props);
-        this.rows = React.createRef();
-        this.cols = React.createRef();
+        this.n = React.createRef();
+        this.selected = React.createRef();
         this.state = {
             board: Array(20).fill(null).map(() => new Array(20).fill(null)),
             xIsNext: true,
             rows: 20,
             cols: 20,
             notification: false,
+            isWin: false,
+            isMoved: false,
+            isLimited: false,
+            history: [
+                {squares: Array(20).fill(null).map(() => new Array(20).fill(null))}
+            ],
+            stepNumber: 0
         }
     }
 
@@ -22,242 +31,255 @@ class Game extends Component {
         this.setState(prevState => {
             return {
                 ...prevState,
-                notification: false
+                notification: false,
+                isMoved: false,
+                isLimited: false
             }
         })
     }
 
     handleClick = (row, col, isWin, winner) => {
         if (isWin) {
-            alert("Player " + winner + " is won. Reset game to continue!");
+            this.setState(prevState => {
+                return {
+                    ...prevState,
+                    notification: !prevState.notification,
+                    isWin: !prevState.isWin
+                }
+            })
         }
         else {
             if (this.state.board[row][col] === null) {
-                const copyBoard = this.state.board.slice();
+                const copyBoard = this.state.board.map(e => {
+                    return e.slice();
+                })
                 copyBoard[row][col] = this.state.xIsNext ? 'X' : 'O';
+                const history = this.state.history.slice();
+                const updatedHistory = [...history, {squares: copyBoard}];
+
                 this.setState(prevState => {
                     return {
                         ...prevState,
                         board: copyBoard,
                         xIsNext: !prevState.xIsNext,
+                        history: updatedHistory,
+                        stepNumber: prevState.stepNumber + 1
                     }
                 });
             }
             else {
-                alert("This square has been drawn!");
+                this.setState(prevState => {
+                    return {
+                        ...prevState,
+                        notification: !prevState.notification,
+                        isMoved: !prevState.isMoved
+                    }
+                })
             }
         }
-    }
-
-
-    lineCheck = (board, isVerticalCheck, rows, cols) => {
-        for(let i = 0; i < (isVerticalCheck ? cols : rows); i++) {
-            let player1 = 0;
-            let player2 = 0;
-            let storeLine1 = Array(5).fill(null);
-            let storeLine2 = Array(5).fill(null);
-            for (let j = 0; j < (isVerticalCheck ? rows : cols); j++) {
-                switch(board[(isVerticalCheck ? j : i)][(isVerticalCheck ? i : j)]) {
-                    case 'X':
-                        player2 = 0;
-                        storeLine2.fill(null);
-                        storeLine1[player1] = {i: isVerticalCheck ? j : i, j: isVerticalCheck ? i : j};
-                        if (++player1 === 5) return {winner: 'X', storeLine: storeLine1.slice()}
-                        break;
-                    case 'O':
-                        player1 = 0;
-                        storeLine1.fill(null);
-                        storeLine2[player2] = {i: isVerticalCheck ? j : i ,j: isVerticalCheck ? i : j};
-                        if (++player2 === 5) return {winner: 'O', storeLine: storeLine2.slice()}
-                        break;
-                    default:
-                        player1 = 0;
-                        player2 = 0;
-                        storeLine1.fill(null);
-                        storeLine2.fill(null);
-                        break;
-                }
-            }
-        }
-        return null;
-    }
-
-    diagonalCheck = (board, mode, rows, cols) => {
-        for (let j = (mode ? cols : rows) - 5; j >= 0; j--) {
-            let tmp = j;
-            let player1 = 0;
-            let player2 = 0;
-            let storeLine1 = Array(5).fill(null);
-            let storeLine2 = Array(5).fill(null);
-            for(let i = 0; i < (mode ? cols : rows) - j; i++, tmp++) {
-                switch (board[(mode ? tmp : i)][(mode ? i : tmp)]) {
-                    case 'X':
-                        player2 = 0;
-                        storeLine2.fill(null);
-                        storeLine1[player1] = {i: mode ? tmp : i, j: mode ? i : tmp};
-                        if (++player1 === 5) return {winner: 'X', storeLine: storeLine1.slice()}
-                        break;
-                    case 'O':
-                        player1 = 0;
-                        storeLine1.fill(null);
-                        storeLine2[player2] = {i: mode ? tmp : i, j: mode ? i : tmp};
-                        if (++player2 === 5) return {winner: 'O', storeLine: storeLine2.slice()}
-                        break;
-                    default:
-                        player1 = 0;
-                        player2 = 0;
-                        storeLine1.fill(null);
-                        storeLine2.fill(null);
-                        break;
-                }
-            }
-        }
-        return null;
-    }
-
-    diagonalCheckSub = (board, mode, rows, cols) => {
-        for (let j = (mode ? (cols - 1) : (rows - 5)) ; j >= (mode ? 5 : 1); j--) {
-            let tmp = j;
-            let player1 = 0;
-            let player2 = 0;
-            let storeLine1 = Array(5).fill(null);
-            let storeLine2 = Array(5).fill(null);
-            for(let i = (mode ? 0 : (cols - 1)); (mode ? (i <= j) : (i >= j)); (mode ? (i++, tmp--) : (i--, tmp++))) {
-                switch (board[(mode ? i : tmp)][(mode ? tmp : i)]) {
-                    case 'X':
-                        player2 = 0;
-                        storeLine2.fill(null);
-                        storeLine1[player1] = {i: mode ? i : tmp, j: mode ? tmp : i};
-                        if (++player1 === 5) return {winner: 'X', storeLine: storeLine1.slice()}
-                        break;
-                    case 'O':
-                        player1 = 0;
-                        storeLine1.fill(null);
-                        storeLine2[player2] = {i: mode ? i : tmp, j: mode ? tmp : i};
-                        if (++player2 === 5) return {winner: 'O', storeLine: storeLine2.slice()}
-                        break;
-                    default:
-                        player1 = 0;
-                        player2 = 0;
-                        storeLine1.fill(null);
-                        storeLine2.fill(null);
-                        break;
-                }
-            }
-        }
-        return null;
-    }
-
-    checkWinner = board => {
-        const lineCheckCol = this.lineCheck(board, true, this.state.rows, this.state.cols);
-        const lineCheckRow = this.lineCheck(board, false, this.state.rows, this.state.cols);
-        const diagonalCheck1 = this.diagonalCheck(board, true, this.state.rows, this.state.cols);
-        const diagonalCheck2 = this.diagonalCheck(board, false, this.state.rows, this.state.cols);
-        const diagonalCheckSub1 = this.diagonalCheckSub(board, true, this.state.rows, this.state.cols);
-        const diagonalCheckSub2 = this.diagonalCheckSub(board, false, this.state.rows, this.state.cols);
-
-        if (lineCheckCol !== null) {
-            return lineCheckCol;
-        }
-        if (lineCheckRow !== null) {
-            return lineCheckRow;
-        }
-        if (diagonalCheck1 !== null) {
-            return diagonalCheck1;
-        }
-        if (diagonalCheck2 !== null) {
-            return diagonalCheck2;
-        }
-        if (diagonalCheckSub1 !== null) {
-            return diagonalCheckSub1;
-        }
-        if (diagonalCheckSub2 !== null) {
-            return diagonalCheckSub2;
-        }
-        return null;
     }
 
     handleReset = () => {
+        this.selected.current.value = "X";
+
         this.setState(prevState => {
             return {
                 ...prevState,
                 board: Array(prevState.rows).fill(null).map(() => new Array(prevState.cols).fill(null)),
                 xIsNext: true,
-                notification: false
+                notification: false,
+                isWin: false,
+                history: [
+                    {squares: Array(prevState.rows).fill(null).map(() => new Array(prevState.cols).fill(null))}
+                ],
+                stepNumber: 0
             }
         });
+    }
+
+    handleENTER = () => {
+        const n = !this.n.current.value ? this.state.rows : parseInt(this.n.current.value);
+
+        if (n >= 5) {
+            const newBoard = Array(n).fill(null).map(() => new Array(n).fill(null));
+
+            this.setState(prevState => {
+                return {
+                    ...prevState,
+                    board: newBoard.slice(),
+                    xIsNext: true,
+                    rows : n,
+                    cols : n
+                }
+            })
+        }
+        else {
+            this.setState(prevState => {
+                return {
+                    ...prevState,
+                    notification: !prevState.notification,
+                    isLimited: !prevState.isLimit
+                }
+            })
+        }
+        
+    }
+
+    handleENTERkey = (e) => {
+        if (e.key === 'Enter') {
+            this.handleENTER();
+        }
+    }
+
+    handleSelect = () => {
+        const selected = this.selected.current.value;
+        const xIsNext = selected === 'X' ? true : false;
+
+        this.setState(prevState => {
+            return {
+                ...prevState,
+                board: Array(prevState.rows).fill(null).map(() => new Array(prevState.cols).fill(null)),
+                xIsNext,
+                notification: false,
+                isWin: false
+            }
+        });
+    }
+
+    handleBack = () => {
+        const stepNumber = this.state.stepNumber;
+        const history = this.state.history.slice(0, -1);
+        const historyBoard = this.state.history[stepNumber - 1];
+        const board = historyBoard.squares;
+
+        this.setState(prevState => {
+            return {
+                ...prevState,
+                board,
+                xIsNext: !prevState.xIsNext,
+                history,
+                stepNumber: prevState.stepNumber - 1
+            }
+        })
+
     }
 
     checkDraw = () => {
         return (this.state.board.map(e => e.some(el => el === null))).some(item => item === true);
     }
 
-    handleOk = () => {
-        const rows = !this.rows.current.value ? this.state.rows : parseInt(this.rows.current.value);
-        const cols = !this.cols.current.value ? this.state.cols : parseInt(this.cols.current.value);
-
-        const newBoard = Array(rows).fill(null).map(() => new Array(cols).fill(null));
-
-        this.setState(prevState => {
-            return {
-                ...prevState,
-                board: newBoard.slice(),
-                xIsNext: true,
-                rows,
-                cols
+    isWin = () => {
+        const isConsecutiveLineRows = Caro.isConsecutiveLine(this.state.board, false, this.state.rows, this.state.cols);
+        if (isConsecutiveLineRows !== null) {
+            return {...isConsecutiveLineRows, isWin: true};
+        } 
+        else {
+            const isConsecutiveLineCols = Caro.isConsecutiveLine(this.state.board, true, this.state.rows, this.state.cols);
+            if (isConsecutiveLineCols !== null) {
+                return {...isConsecutiveLineCols, isWin: true};
             }
-        })
-    }
-
-    handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            this.handleOk();
+            else {
+                const isConsecutiveDiagonalLeft2RightAbove = Caro.isConsecutiveDiagonalLeft2Right(this.state.board, true, this.state.rows, this.state.cols);
+                if (isConsecutiveDiagonalLeft2RightAbove !== null) {
+                    return {...isConsecutiveDiagonalLeft2RightAbove, isWin: true};
+                }
+                else {
+                    const isConsecutiveDiagonalLeft2RightBelow = Caro.isConsecutiveDiagonalLeft2Right(this.state.board, false, this.state.rows, this.state.cols);
+                    if (isConsecutiveDiagonalLeft2RightBelow !== null) {
+                        return {...isConsecutiveDiagonalLeft2RightBelow, isWin: true};
+                    }
+                    else {
+                        const isConsecutiveDiagonalRight2LeftAbove = Caro.isConsecutiveDiagonalRight2Left(this.state.board, true, this.state.rows, this.state.cols);
+                        if (isConsecutiveDiagonalRight2LeftAbove !== null) {
+                            return {...isConsecutiveDiagonalRight2LeftAbove, isWin: true};
+                        } 
+                        else {
+                            const isConsecutiveDiagonalRight2LeftBelow = Caro.isConsecutiveDiagonalRight2Left(this.state.board, false, this.state.rows, this.state.cols);
+                            if (isConsecutiveDiagonalRight2LeftBelow !== null) {
+                                return {...isConsecutiveDiagonalRight2LeftBelow, isWin: true};
+                            }
+                            else {
+                                return {isWin: false};
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
     render() {
-        const isNoti = !this.checkDraw();
-        const checkWinner = this.checkWinner(this.state.board); 
-        let result = null;
-        let isWin = false;
-        if (checkWinner !== null) {
-            result = checkWinner.winner;
-            isWin = true;
-            console.log(checkWinner.storeLine);
+        const isDraw = !this.checkDraw();
+        const checkWin = this.isWin(); 
+        let winner = "";
+        const isWin = checkWin.isWin;
+
+        if (isWin === true) {
+            winner = checkWin.winner;
         }
+
+        const currentPlayer = this.state.xIsNext ? 'X' : 'O';
+        const spanCurrentPlayer = this.state.xIsNext ? "RedSpan" : "BlueSpan";
+        const spanWinner = winner === "X" ? "RedSpan" : "BlueSpan";
+        const disabled = this.state.stepNumber === 0 ? true : false; 
 
         return (
             <div className="Game">
-                <Modal show={this.state.notification || isNoti} modalClosed={this.handleModalClosed}>
-                    <Notification resetBoard={this.handleReset} />
-                </Modal>
+                <Dialog show={this.state.notification || isDraw} modalClosed={this.handleModalClosed}>
+                    <Alert 
+                        resetBoard={this.handleReset} 
+                        isWin={this.state.isWin} 
+                        isDraw={isDraw}
+                        isMoved={this.state.isMoved}
+                        isLimited={this.state.isLimited}
+                        closed={this.handleModalClosed}
+                        winner={winner} />
+                </Dialog>
                 <div className="Game-board">
                     <Board 
                         board={this.state.board} 
                         onClick={(row, col, isWin, winner) => this.handleClick(row, col, isWin, winner)}
                         isWin={isWin}
-                        highlight={checkWinner ? checkWinner.storeLine : null} 
-                        winner={result}    
+                        highlight={isWin ? checkWin.highlight : null} 
+                        winner={winner}    
                         />
                 </div>
-                <div className="Output">
+                <div className="Console">
                     <div className="Game-info">
-                        <p>Winner is player {result}</p>
+                        <h1>CARO</h1>
+                        <h4>Current player <span className={spanCurrentPlayer}>{currentPlayer}</span></h4>
+                        <h4>Winner is player <span className={spanWinner}>{winner}</span></h4>
                     </div>
 
                     <div>
-                        <button className="Button Success" onClick={this.handleReset}>Reset</button>
+                        <Button btnType="Danger" clicked={this.handleReset}>RESET</Button> 
                     </div>
 
                     <div>
-                        <input placeholder="rows (default: 20)" type="number" ref={this.rows} onKeyDown={this.handleKeyDown}/>
-                        <input placeholder=" cols (default: 20)" type="number" ref={this.cols} onKeyDown={this.handleKeyDown}/>
-                        <button className="Button Success" onClick={this.handleOk}>Ok</button>
+                        <input 
+                            placeholder="default: 20x20" 
+                            type="number" 
+                            ref={this.n} 
+                            onKeyDown={this.handleENTERkey}
+                            className="MyInput"
+                            min="5"
+                            />
+                        <Button btnType="Success" clicked={this.handleENTER}>ENTER</Button>
+                    </div>
+                    <div>
+                        <p>Who go first? (Click here will reset game)</p>
+                        <select ref={this.selected} className="MyInput">
+                            <option value="X">X</option>
+                            <option value="O">O</option>
+                        </select>
+                        <Button btnType="Success" clicked={this.handleSelect}>SELECT</Button>
+                    </div>
+                    <div className="Game">
+                        <p style={{marginRight: 20}}>Step number: {this.state.stepNumber}</p>
+                        <Button btnType="Primary" clicked={this.handleBack} disabled={disabled} >BACK</Button>
                     </div>
                 </div>
-            </div>
-            
-                    
+            </div>                    
         );
     }
 }
