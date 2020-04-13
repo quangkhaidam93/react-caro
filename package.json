@@ -2,6 +2,10 @@
   "name": "tic-tac-toe-1653033",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "npm": "6.13.3",
+    "node": "12.12.0"
+  },
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",

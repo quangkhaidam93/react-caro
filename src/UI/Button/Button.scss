@@ -17,12 +17,45 @@
 
 .Success {
     background-color: #2ba745;
+
+    &:hover {
+        background-color: #3ec75d;
+    }
 }
 
 .Danger {
     background-color: #DC3545;
+
+    &:hover {
+        background-color: #f05665;
+    }
+}
+
+.Info {
+    background-color: #1591A4;
+
+    &:hover {
+        background-color: #17A2B8;
+    }
+
+    &:focus {
+        background-color: #34d9d3;
+    }
+
+    &:active {
+        background-color: #17A2B8 !important;
+    }
 }
 
 .Primary {
     background-color: #007BFF;
+
+    &:hover {
+        background-color: #3c98fa;
+    }
 }
+
+.Active {
+    background-color: #34d9d3;
+}
+

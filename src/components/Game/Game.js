@@ -12,7 +12,6 @@ class Game extends Component {
         this.n = React.createRef();
         this.selected = React.createRef();
         this.state = {
-            board: Array(20).fill(null).map(() => new Array(20).fill(null)),
             xIsNext: true,
             rows: 20,
             cols: 20,
@@ -21,9 +20,21 @@ class Game extends Component {
             isMoved: false,
             isLimited: false,
             history: [
-                {squares: Array(20).fill(null).map(() => new Array(20).fill(null))}
+                {
+                    squares: Array(20).fill(null).map(() => new Array(20).fill(null)),
+                    pos: {
+                        isX: null,
+                        row: null,
+                        col: null
+                    }
+                }
             ],
-            stepNumber: 0
+            stepNumber: 0,
+            isDesc: false,
+            activePosition: {
+                isActive: false,
+                position: 0
+            }
         }
     }
 
@@ -39,6 +50,8 @@ class Game extends Component {
     }
 
     handleClick = (row, col, isWin, winner) => {
+        const history = this.state.history.slice(0, this.state.stepNumber + 1);
+        const current = history[this.state.stepNumber].squares;
         if (isWin) {
             this.setState(prevState => {
                 return {
@@ -49,21 +62,33 @@ class Game extends Component {
             })
         }
         else {
-            if (this.state.board[row][col] === null) {
-                const copyBoard = this.state.board.map(e => {
+            if (current[row][col] === null) {
+                const copyBoard = current.map(e => {
                     return e.slice();
                 })
                 copyBoard[row][col] = this.state.xIsNext ? 'X' : 'O';
-                const history = this.state.history.slice();
-                const updatedHistory = [...history, {squares: copyBoard}];
+                const updatedHistory = [
+                    ...history, 
+                    {
+                        squares: copyBoard, 
+                        pos: {
+                            isX: this.state.xIsNext ? 'X' : 'O',
+                            row: row,
+                            col: col
+                        }
+                    }
+                ];
 
                 this.setState(prevState => {
                     return {
                         ...prevState,
-                        board: copyBoard,
                         xIsNext: !prevState.xIsNext,
                         history: updatedHistory,
-                        stepNumber: prevState.stepNumber + 1
+                        stepNumber: history.length,
+                        activePosition: {
+                            isActive: false,
+                            position: 0
+                        }
                     }
                 });
             }
@@ -85,14 +110,25 @@ class Game extends Component {
         this.setState(prevState => {
             return {
                 ...prevState,
-                board: Array(prevState.rows).fill(null).map(() => new Array(prevState.cols).fill(null)),
                 xIsNext: true,
                 notification: false,
                 isWin: false,
                 history: [
-                    {squares: Array(prevState.rows).fill(null).map(() => new Array(prevState.cols).fill(null))}
+                    {
+                        squares: Array(prevState.rows).fill(null).map(() => new Array(prevState.cols).fill(null)),
+                        pos: {
+                            isX: null,
+                            row: null,
+                            col: null
+                        }
+                    }
                 ],
-                stepNumber: 0
+                stepNumber: 0,
+                isDesc: false,
+                activePosition: {
+                    isActive: false,
+                    position: 0
+                }
             }
         });
     }
@@ -106,10 +142,25 @@ class Game extends Component {
             this.setState(prevState => {
                 return {
                     ...prevState,
-                    board: newBoard.slice(),
+                    history: [
+                        {
+                            squares: newBoard,
+                            pos: {
+                                isX: null,
+                                row: null,
+                                col: null
+                            }
+                        }
+                    ],
                     xIsNext: true,
                     rows : n,
-                    cols : n
+                    cols : n,
+                    stepNumber: 0,
+                    isDesc: false,
+                    activePosition: {
+                        isActive: false,
+                        position: 0
+                    }
                 }
             })
         }
@@ -138,63 +189,116 @@ class Game extends Component {
         this.setState(prevState => {
             return {
                 ...prevState,
-                board: Array(prevState.rows).fill(null).map(() => new Array(prevState.cols).fill(null)),
+                history: [
+                    {
+                        squares: Array(prevState.rows).fill(null).map(() => new Array(prevState.cols).fill(null)),
+                        pos: {
+                            isX: null,
+                            row: null,
+                            col: null
+                        }
+                    }
+                ],
                 xIsNext,
                 notification: false,
-                isWin: false
+                isWin: false,
+                stepNumber: 0,
+                isDesc: false,
+                activePosition: {
+                    isActive: false,
+                    position: 0
+                }
             }
         });
     }
 
     handleBack = () => {
-        const stepNumber = this.state.stepNumber;
         const history = this.state.history.slice(0, -1);
-        const historyBoard = this.state.history[stepNumber - 1];
-        const board = historyBoard.squares;
 
         this.setState(prevState => {
             return {
                 ...prevState,
-                board,
                 xIsNext: !prevState.xIsNext,
                 history,
                 stepNumber: prevState.stepNumber - 1
             }
         })
+    }
 
+    handleSort = () => {
+        if (this.state.isDesc === false) {
+            this.setState(
+                prevState => {
+                    return {
+                        ...prevState,
+                        isDesc: !prevState.isDesc
+                    }
+                }
+            )
+        }
+        else {
+            this.setState(
+                prevState => {
+                    return {
+                        ...prevState,
+                        isDesc: !prevState.isDesc
+                    }
+                }
+            )
+        }
+    }
+
+    jumpTo = step => {
+        this.setState(prevState => {
+            return {
+                ...prevState,
+                stepNumber: step,
+                xIsNext: (step % 2) === 0,
+                activePosition: {
+                    isActive: !prevState.activePosition.isActive,
+                    position: step
+                }
+            }
+        });
+
+        console.log(this.state.stepNumber);
     }
 
     checkDraw = () => {
-        return (this.state.board.map(e => e.some(el => el === null))).some(item => item === true);
+        const history = this.state.history;
+        const current = history[this.state.stepNumber].squares;
+        return (current.map(e => e.some(el => el === null))).some(item => item === true);
     }
 
     isWin = () => {
-        const isConsecutiveLineRows = Caro.isConsecutiveLine(this.state.board, false, this.state.rows, this.state.cols);
+        const history = this.state.history;
+        const current = history[this.state.stepNumber].squares;
+        const isConsecutiveLineRows = Caro.isConsecutiveLine(current, false, this.state.rows, this.state.cols);
         if (isConsecutiveLineRows !== null) {
             return {...isConsecutiveLineRows, isWin: true};
         } 
         else {
-            const isConsecutiveLineCols = Caro.isConsecutiveLine(this.state.board, true, this.state.rows, this.state.cols);
+            const isConsecutiveLineCols = Caro.isConsecutiveLine(current, true, this.state.rows, this.state.cols);
             if (isConsecutiveLineCols !== null) {
                 return {...isConsecutiveLineCols, isWin: true};
             }
             else {
-                const isConsecutiveDiagonalLeft2RightAbove = Caro.isConsecutiveDiagonalLeft2Right(this.state.board, true, this.state.rows, this.state.cols);
+                const isConsecutiveDiagonalLeft2RightAbove = Caro.isConsecutiveDiagonalLeft2Right(current, true, this.state.rows, this.state.cols);
                 if (isConsecutiveDiagonalLeft2RightAbove !== null) {
                     return {...isConsecutiveDiagonalLeft2RightAbove, isWin: true};
                 }
                 else {
-                    const isConsecutiveDiagonalLeft2RightBelow = Caro.isConsecutiveDiagonalLeft2Right(this.state.board, false, this.state.rows, this.state.cols);
+                    const isConsecutiveDiagonalLeft2RightBelow = Caro.isConsecutiveDiagonalLeft2Right(current, false, this.state.rows, this.state.cols);
                     if (isConsecutiveDiagonalLeft2RightBelow !== null) {
                         return {...isConsecutiveDiagonalLeft2RightBelow, isWin: true};
                     }
                     else {
-                        const isConsecutiveDiagonalRight2LeftAbove = Caro.isConsecutiveDiagonalRight2Left(this.state.board, true, this.state.rows, this.state.cols);
+                        const isConsecutiveDiagonalRight2LeftAbove = Caro.isConsecutiveDiagonalRight2Left(current, true, this.state.rows, this.state.cols);
                         if (isConsecutiveDiagonalRight2LeftAbove !== null) {
                             return {...isConsecutiveDiagonalRight2LeftAbove, isWin: true};
                         } 
                         else {
-                            const isConsecutiveDiagonalRight2LeftBelow = Caro.isConsecutiveDiagonalRight2Left(this.state.board, false, this.state.rows, this.state.cols);
+                            const isConsecutiveDiagonalRight2LeftBelow = Caro.isConsecutiveDiagonalRight2Left(current, false, this.state.rows, this.state.cols);
                             if (isConsecutiveDiagonalRight2LeftBelow !== null) {
                                 return {...isConsecutiveDiagonalRight2LeftBelow, isWin: true};
                             }
@@ -221,7 +325,29 @@ class Game extends Component {
         const currentPlayer = this.state.xIsNext ? 'X' : 'O';
         const spanCurrentPlayer = this.state.xIsNext ? "RedSpan" : "BlueSpan";
         const spanWinner = winner === "X" ? "RedSpan" : "BlueSpan";
-        const disabled = this.state.stepNumber === 0 ? true : false; 
+        const disabled = this.state.stepNumber === 0 ? true : false;
+        const history = this.state.history;
+        const current = history[this.state.stepNumber].squares;
+        const sort = this.state.isDesc ? 'ASCENDING' : 'DESCENDING';
+        
+        let moves = history.map((step, move) => {
+            const asc = move ? 'Go to move #' + move + ' ' + step.pos.isX + ' (row: ' + step.pos.row + ' col: ' + step.pos.col + ')'
+            : 'Go to game start';
+            let active;
+            if (this.state.activePosition.isActive === false) {
+                active = move === history.length - 1 ? 'Active' : 'Info';
+            }
+            else {
+                active = this.state.activePosition.position === move ? 'Active' : 'Info';
+            }
+            return (
+                <li key={move}>
+                    <Button btnType={active} clicked={() => this.jumpTo(move)}>{asc}</Button>
+                </li>
+            )
+        });
+
+        moves = this.state.isDesc ? moves : moves.reverse();
 
         return (
             <div className="Game">
@@ -237,7 +363,7 @@ class Game extends Component {
                 </Dialog>
                 <div className="Game-board">
                     <Board 
-                        board={this.state.board} 
+                        board={current} 
                         onClick={(row, col, isWin, winner) => this.handleClick(row, col, isWin, winner)}
                         isWin={isWin}
                         highlight={isWin ? checkWin.highlight : null} 
@@ -277,6 +403,12 @@ class Game extends Component {
                     <div className="Game">
                         <p style={{marginRight: 20}}>Step number: {this.state.stepNumber}</p>
                         <Button btnType="Primary" clicked={this.handleBack} disabled={disabled} >BACK</Button>
+                    </div>
+                    <div>
+                        <Button btnType="Primary" clicked={this.handleSort}>
+                            {sort}
+                        </Button>
+                        <div>{moves}</div>
                     </div>
                 </div>
             </div>                    

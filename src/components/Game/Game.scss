@@ -29,3 +29,11 @@
     color: blue;
     font-weight: bold;
 }
+
+li {
+    list-style-type: none;
+}
+
+.active {
+    background: red !important;
+}
