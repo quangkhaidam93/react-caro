@@ -255,7 +255,7 @@ class Game extends Component {
                 stepNumber: step,
                 xIsNext: (step % 2) === 0,
                 activePosition: {
-                    isActive: !prevState.activePosition.isActive,
+                    isActive: true,
                     position: step
                 }
             }
