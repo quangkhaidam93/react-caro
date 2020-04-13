@@ -13,6 +13,7 @@ class Game extends Component {
         this.selected = React.createRef();
         this.state = {
             xIsNext: true,
+            xFirst: true,
             rows: 20,
             cols: 20,
             notification: false,
@@ -142,6 +143,7 @@ class Game extends Component {
             this.setState(prevState => {
                 return {
                     ...prevState,
+                    xFirst: true,
                     history: [
                         {
                             squares: newBoard,
@@ -185,10 +187,12 @@ class Game extends Component {
     handleSelect = () => {
         const selected = this.selected.current.value;
         const xIsNext = selected === 'X' ? true : false;
+        const xFirst = selected === 'X' ? true : false;
 
         this.setState(prevState => {
             return {
                 ...prevState,
+                xFirst,
                 history: [
                     {
                         squares: Array(prevState.rows).fill(null).map(() => new Array(prevState.cols).fill(null)),
@@ -249,11 +253,12 @@ class Game extends Component {
     }
 
     jumpTo = step => {
+        const xIsNext = this.state.xFirst ? (step % 2) === 0 : (step % 2) === 1;
         this.setState(prevState => {
             return {
                 ...prevState,
                 stepNumber: step,
-                xIsNext: (step % 2) === 0,
+                xIsNext,
                 activePosition: {
                     isActive: true,
                     position: step
